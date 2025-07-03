@@ -88,7 +88,7 @@ startBtn.addEventListener('click', function() {
         var dataURL = canvas.toDataURL('image/jpeg');
         socket.emit('video_frame', { image: dataURL });
       }
-    }, 41.6); // ~24fps
+    }, 50); // ~20fps
 
     startBtn.textContent = 'Stop';
     startBtn.dataset.state = 'transmitting';
