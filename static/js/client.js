@@ -50,6 +50,7 @@ startBtn.addEventListener('click', function() {
     }
     startBtn.textContent = 'Start';
     startBtn.dataset.state = 'stopped';
+    socket.emit('disconnect');
     return;
   }
 

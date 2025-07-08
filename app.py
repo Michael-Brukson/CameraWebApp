@@ -37,11 +37,21 @@ def on_join_server() -> None:
 def on_disconnect() -> None:
     # emits 'user_disconnected' and passes socket id of disconnected client
     emit('user_disconnected', {'sid': request.sid}, room=SERVER)
+    socketio.emit('close_cam')
+
+
+@socketio.on('close_cam')
+def on_close_cam() -> None:
+    global cam
+    if cam is not None:
+        cam.close()
+        cam = None
+    emit('cam_closed', room=request.sid)
+
 
 # Socketio event when a client device transmits a single frame of video feed. Returns None.
 @socketio.on('video_frame')
 def on_video_frame(data) -> None:
-    # reference global pvc cam
     global cam
 
     frame = data['image'] # frame data 
@@ -51,9 +61,8 @@ def on_video_frame(data) -> None:
     frame = np.frombuffer(frame, dtype=np.uint8) # convert to np.ndarray for opencv
     frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
 
-    # TODO: this does not work properly when camera is held horizontally.
-    if cam is None:
-        cam = pvc.Camera(width=frame.shape[1], height=frame.shape[0], fps=20, fmt=pvc.PixelFormat.BGR)
+    if cam is None or cam.width != frame.shape[1]:
+        cam = pvc.Camera(width=frame.shape[0], height=frame.shape[1], fps=20, fmt=pvc.PixelFormat.BGR)
 
     # send frame to camera
     cam.send(frame)
