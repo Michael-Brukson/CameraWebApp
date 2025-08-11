@@ -1,6 +1,6 @@
 var socket = io();
 
-socket.on('local_frame', function(data) {
+socket.on('frame', function(data) {
   var remoteFeedDiv = document.getElementById('remote-feed');
   var remoteCanvas = remoteFeedDiv.querySelector('canvas');
 
@@ -28,7 +28,7 @@ var activeStream = null;
 var activeVideo = null;
 var activeCanvas = null;
 
-var startBtn = document.getElementById('start-transmit');
+var startBtn = document.getElementById('start');
 
 startBtn.addEventListener('click', function() {
   if (startBtn.dataset.state === 'transmitting') {

@@ -10,7 +10,6 @@ import re
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-SERVER: str = 'server' # server room for viewing all available feeds
 cam: pvc.Camera = None # pyvirtualcam instance
 
 
@@ -20,33 +19,19 @@ def index() -> str:
     return render_template('client.html')
 
 
-# Server view route, serves server HTML page, returns str of html.
-@app.route('/server')
-def server() -> str:
-    return render_template('server.html')
-
-
-# Socketio event when someone views the /server route. Returns none.
-@socketio.on('join_server')
-def on_join_server() -> None:
-    join_room(SERVER)
-
-
 # Socketio event when client device disconnects (reloads/closes/etc.) to remove their feed. Returns None.
 @socketio.on('disconnect')
 def on_disconnect() -> None:
     # emits 'user_disconnected' and passes socket id of disconnected client
-    emit('user_disconnected', {'sid': request.sid}, room=SERVER)
-    socketio.emit('close_cam')
+    emit('user_disconnected', {'sid': request.sid})
+    close_cam()
+ 
 
-
-@socketio.on('close_cam')
-def on_close_cam() -> None:
+def close_cam() -> None:
     global cam
     if cam is not None:
         cam.close()
         cam = None
-    emit('cam_closed', room=request.sid)
 
 
 # Socketio event when a client device transmits a single frame of video feed. Returns None.
@@ -68,9 +53,7 @@ def on_video_frame(data) -> None:
     cam.send(frame)
 
     data['sid'] = request.sid
-    # send frame to client and server
-    emit('local_frame', data, room=request.sid)
-    emit('server_frame', data, room=SERVER) 
+    emit('frame', data, room=request.sid)
 
 
 if __name__ == '__main__':
