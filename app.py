@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
+import atexit
 import pyvirtualcam as pvc
 import base64
 import numpy as np
@@ -46,15 +47,27 @@ def on_video_frame(data) -> None:
     frame = np.frombuffer(frame, dtype=np.uint8) # convert to np.ndarray for opencv
     frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
 
-    if cam is None or cam.width != frame.shape[1]:
-        cam = pvc.Camera(width=frame.shape[0], height=frame.shape[1], fps=20, fmt=pvc.PixelFormat.BGR)
+    # with pvc.Camera(width=frame.shape[0], height=frame.shape[1], fps=20, fmt=pvc.PixelFormat.BGR) as cam:
+    #     cam.send(frame)
+    #     cam.sleep_until_next_frame()
 
-    # send frame to camera
+    if cam is None or cam.width != frame.shape[1] or cam.height != frame.shape[0]:
+        close_cam()
+        try:
+            cam = pvc.Camera(width=frame.shape[1], height=frame.shape[0], fps=20, fmt=pvc.PixelFormat.BGR, backend='obs')
+        except RuntimeError as e:
+            print(e)
+            exit(-1)
+    
     cam.send(frame)
+    cam.sleep_until_next_frame()
 
     data['sid'] = request.sid
-    emit('frame', data, room=request.sid)
+    emit('show_user', data, room=request.sid)
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
+    try:
+        socketio.run(app, debug=True, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
+    finally:
+        close_cam()

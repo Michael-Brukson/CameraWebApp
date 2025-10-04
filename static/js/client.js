@@ -1,6 +1,6 @@
 var socket = io();
 
-socket.on('frame', function(data) {
+socket.on('show_user', function(data) {
   var remoteFeedDiv = document.getElementById('remote-feed');
   var remoteCanvas = remoteFeedDiv.querySelector('canvas');
 
@@ -58,7 +58,8 @@ startBtn.addEventListener('click', function() {
   var constraints = {
     audio: false,
     video: {
-      facingMode: facingMode
+      facingMode: facingMode,
+      width: { min: 1280 }, height: { min: 720 }
     }
   };
 
@@ -81,17 +82,17 @@ startBtn.addEventListener('click', function() {
     video.onloadedmetadata = function() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-    }
 
-    interval = setInterval(function() {
-      if (canvas.width && canvas.height) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        var dataURL = canvas.toDataURL('image/jpeg');
-        socket.emit('video_frame', { image: dataURL });
-      }
-    }, 50); // ~20fps
-
-    startBtn.textContent = 'Stop';
-    startBtn.dataset.state = 'transmitting';
+      interval = setInterval(function() {
+        if (canvas.width && canvas.height) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          var dataURL = canvas.toDataURL('image/jpeg');
+          socket.emit('video_frame', { image: dataURL });
+        }
+      }, 50); // ~20fps
+  
+      startBtn.textContent = 'Stop';
+      startBtn.dataset.state = 'transmitting';
+    };
   });
 });
