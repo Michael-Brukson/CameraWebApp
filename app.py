@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
-import atexit
 import pyvirtualcam as pvc
 import base64
 import numpy as np
 import cv2
 import re
+import subprocess
 
 
 app = Flask(__name__)
@@ -21,10 +21,8 @@ def index() -> str:
 
 
 # Socketio event when client device disconnects (reloads/closes/etc.) to remove their feed. Returns None.
-@socketio.on('disconnect')
+@socketio.on('stop_feed')
 def on_disconnect() -> None:
-    # emits 'user_disconnected' and passes socket id of disconnected client
-    emit('user_disconnected', {'sid': request.sid})
     close_cam()
  
 
@@ -63,11 +61,11 @@ def on_video_frame(data) -> None:
     cam.sleep_until_next_frame()
 
     data['sid'] = request.sid
-    emit('show_user', data, room=request.sid)
 
 
 if __name__ == '__main__':
+    host, port = "0.0.0.0", 443
     try:
-        socketio.run(app, debug=True, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
+        socketio.run(app, host=host, port=port, ssl_context=('cert.pem', 'key.pem')) 
     finally:
         close_cam()

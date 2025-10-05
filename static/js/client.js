@@ -1,34 +1,15 @@
 var socket = io();
 
-socket.on('show_user', function(data) {
-  var remoteFeedDiv = document.getElementById('remote-feed');
-  var remoteCanvas = remoteFeedDiv.querySelector('canvas');
-
-  var img = new window.Image();
-  img.onload = function() {
-    remoteCanvas.width = img.width;
-    remoteCanvas.height = img.height;
-    var ctx = remoteCanvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, img.width, img.height);
-  };
-  img.src = data.image;
-});
-
-socket.on('user_disconnected', function(data) {
-  var sid = data.sid;
-  var canvasId = 'remote-feed-canvas-' + sid;
-  var remoteCanvas = document.getElementById(canvasId);
-  if (remoteCanvas) {
-    remoteCanvas.remove();
-  }
-});
-
 var interval = null;
 var activeStream = null;
 var activeVideo = null;
 var activeCanvas = null;
 
 var startBtn = document.getElementById('start');
+
+socket.on('stop_feed', function(data) {
+  document.getElementById('remote-feed').removeChild(parent.firstChild);
+});
 
 startBtn.addEventListener('click', function() {
   if (startBtn.dataset.state === 'transmitting') {
@@ -50,7 +31,7 @@ startBtn.addEventListener('click', function() {
     }
     startBtn.textContent = 'Start';
     startBtn.dataset.state = 'stopped';
-    socket.emit('disconnect');
+    socket.emit('stop_feed');
     return;
   }
 
@@ -69,7 +50,6 @@ startBtn.addEventListener('click', function() {
     video.setAttribute('playsinline', '');
     video.setAttribute('autoplay', '');
     video.setAttribute('muted', '');
-    video.style.display = 'none';
     document.body.appendChild(video);
     video.srcObject = stream;
     activeVideo = video;
@@ -77,16 +57,16 @@ startBtn.addEventListener('click', function() {
     var canvas = document.createElement('canvas');
     var ctx = canvas.getContext('2d');
     document.getElementById('remote-feed').appendChild(canvas);
-    activeCanvas = canvas;
+    canvas.style.display = 'none';
 
     video.onloadedmetadata = function() {
+      console.log(`Video resolution: ${video.videoWidth}x${video.videoHeight}px`);
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
       interval = setInterval(function() {
-        if (canvas.width && canvas.height) {
+        if (video) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          var dataURL = canvas.toDataURL('image/jpeg');
+          var dataURL = canvas.toDataURL('image/jpeg', quality=0.95);
           socket.emit('video_frame', { image: dataURL });
         }
       }, 50); // ~20fps
