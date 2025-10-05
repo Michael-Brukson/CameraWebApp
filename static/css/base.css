@@ -1,0 +1,7 @@
+/* gotten from: https://stackoverflow.com/a/14455993/21667630 */
+#videoElement
+{
+    transform: rotateY(180deg);
+    -webkit-transform:rotateY(180deg);
+    -moz-transform:rotateY(180deg);
+} 
