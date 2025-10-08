@@ -5,8 +5,8 @@ import base64
 import numpy as np
 import cv2
 import re
-import subprocess
-
+import os
+import util
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -65,7 +65,9 @@ def on_video_frame(data) -> None:
 
 if __name__ == '__main__':
     host, port = "0.0.0.0", 443
-    try:
-        socketio.run(app, host=host, port=port, ssl_context=('cert.pem', 'key.pem')) 
-    finally:
-        close_cam()
+    if not os.path.exists("key.pem") or not os.path.exists("cert.pem"):
+        print("no self certification found, generating now...")
+        util.generate_key_cert_pem()
+
+    try: socketio.run(app, host=host, port=port, ssl_context=('cert.pem', 'key.pem')) 
+    finally: close_cam()
