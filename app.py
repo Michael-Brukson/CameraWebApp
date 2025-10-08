@@ -38,21 +38,26 @@ def close_cam() -> None:
 def on_video_frame(data) -> None:
     global cam
 
-    frame = data['image'] # frame data 
-    frame = re.sub('^data:image/.+;base64,', '', frame) # extract base64 string
-    frame = base64.b64decode(frame) # convert to bytes
+    frame_rate = data['frameRate']
 
-    frame = np.frombuffer(frame, dtype=np.uint8) # convert to np.ndarray for opencv
-    frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+    frame: str = data['image'] # frame data 
+    frame: str = re.sub('^data:image/.+;base64,', '', frame) # extract base64 string
+    frame: bytes = base64.b64decode(frame) # convert to bytes
+
+    frame: np.ndarray = np.frombuffer(frame, dtype=np.uint8) # convert to np.ndarray for opencv
+    frame: np.ndarray = cv2.imdecode(frame, cv2.IMREAD_COLOR)
 
     # with pvc.Camera(width=frame.shape[0], height=frame.shape[1], fps=20, fmt=pvc.PixelFormat.BGR) as cam:
     #     cam.send(frame)
     #     cam.sleep_until_next_frame()
 
+    # create camera if doesnt exist or has no shape
     if cam is None or cam.width != frame.shape[1] or cam.height != frame.shape[0]:
         close_cam()
         try:
-            cam = pvc.Camera(width=frame.shape[1], height=frame.shape[0], fps=20, fmt=pvc.PixelFormat.BGR, backend='obs')
+            # TODO: add support for different backends
+            cam = pvc.Camera(width=frame.shape[1], height=frame.shape[0], 
+                             fps=frame_rate, fmt=pvc.PixelFormat.BGR, backend='obs')
         except RuntimeError as e:
             print(e)
             exit(-1)

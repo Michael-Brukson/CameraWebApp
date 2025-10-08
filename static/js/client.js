@@ -1,10 +1,6 @@
 var socket = io();
 
 var interval = null;
-var activeStream = null;
-var activeVideo = null;
-var activeCanvas = null;
-
 var startBtn = document.getElementById('start');
 
 socket.on('stop_feed', function(data) {
@@ -17,36 +13,26 @@ startBtn.addEventListener('click', function() {
       clearInterval(interval);
       interval = null;
     }
-    if (activeStream) {
-      activeStream.getTracks().forEach(track => track.stop());
-      activeStream = null;
-    }
-    if (activeVideo) {
-      activeVideo.remove();
-      activeVideo = null;
-    }
-    if (activeCanvas) {
-      activeCanvas.remove();
-      activeCanvas = null;
-    }
     startBtn.textContent = 'Start';
     startBtn.dataset.state = 'stopped';
     socket.emit('stop_feed');
     return;
   }
 
-  var facingMode = "user";
-  var constraints = {
+  let facingMode = "user";
+  let constraints = {
     audio: false,
     video: {
       facingMode: facingMode,
-      width: { min: 1280 }, height: { min: 720 }
+      width: { min: 1280 }, height: { min: 720 },
+      frameRate: {min: 15, ideal: 30}
     }
   };
 
+  let frameRate = constraints.video.frameRate.ideal || constraints.video.frameRate.min
+
   navigator.mediaDevices.getUserMedia(constraints).then(function success(stream) {
-    activeStream = stream;
-    var video = document.createElement('video');
+    let video = document.createElement('video');
     video.setAttribute('playsinline', '');
     video.setAttribute('autoplay', '');
     video.setAttribute('muted', '');
@@ -54,8 +40,8 @@ startBtn.addEventListener('click', function() {
     video.srcObject = stream;
     activeVideo = video;
 
-    var canvas = document.createElement('canvas');
-    var ctx = canvas.getContext('2d');
+    let canvas = document.createElement('canvas');
+    let ctx = canvas.getContext('2d');
     document.getElementById('remote-feed').appendChild(canvas);
     canvas.style.display = 'none';
 
@@ -65,11 +51,12 @@ startBtn.addEventListener('click', function() {
       canvas.height = video.videoHeight;
       interval = setInterval(function() {
         if (video) {
+          console.log(video.frameRate)
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          var dataURL = canvas.toDataURL('image/jpeg', quality=0.95);
-          socket.emit('video_frame', { image: dataURL });
+          let dataURL = canvas.toDataURL('image/jpeg', quality=0.95);
+          socket.emit('video_frame', { image: dataURL, frameRate: frameRate });
         }
-      }, 50); // ~20fps
+      }, 1000 / frameRate); // ~20fps
   
       startBtn.textContent = 'Stop';
       startBtn.dataset.state = 'transmitting';
