@@ -58,12 +58,13 @@ def on_video_frame(data) -> None:
             # TODO: add support for different backends
             cam = pvc.Camera(width=frame.shape[1], height=frame.shape[0], 
                              fps=frame_rate, fmt=pvc.PixelFormat.BGR, backend='obs')
+            print("initialized camera!")
         except RuntimeError as e:
             print(e)
             exit(-1)
-    
+
     cam.send(frame)
-    cam.sleep_until_next_frame()
+    # cam.sleep_until_next_frame()
 
     data['sid'] = request.sid
 
