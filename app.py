@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import re
 import os
+from dotenv import load_dotenv
 import util
 
 app = Flask(__name__)
@@ -70,10 +71,18 @@ def on_video_frame(data) -> None:
 
 
 if __name__ == '__main__':
-    host, port = "0.0.0.0", 443
     if not os.path.exists("key.pem") or not os.path.exists("cert.pem"):
         print("no self certification found, generating now...")
         util.generate_key_cert_pem()
+    if not os.path.exists(".env"):
+        print("no .env file found, generating now...")
+        util.generate_env()
+    
+    load_dotenv()
+    host, port = os.getenv("HOST"), os.getenv("PORT")
+
+    util.generate_qr(port=port)
+
 
     try: socketio.run(app, host=host, port=port, ssl_context=('cert.pem', 'key.pem')) 
     finally: close_cam()
