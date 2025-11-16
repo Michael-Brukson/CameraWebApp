@@ -64,7 +64,7 @@ startBtn.addEventListener('click', function() {
       interval = setInterval(function() {
         if (video) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          let dataURL = canvas.toDataURL('image/jpeg', quality=0.95);
+          let dataURL = canvas.toDataURL('image/jpeg', quality=0.95); // switch to webrtc.
           socket.emit('video_frame', { image: dataURL, frameRate: frameRate });
         }
       }, 1000 / frameRate); // ~20fps
