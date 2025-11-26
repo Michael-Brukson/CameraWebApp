@@ -1,44 +1,32 @@
-from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit, join_room, leave_room
-import pyvirtualcam as pvc
+from flask import render_template, request
 import base64
 import numpy as np
 import cv2
 import re
-import os
 from dotenv import load_dotenv
+import os
+from __init__ import create_app, socketio
 import util
+from Camera import Camera
 
-app = Flask(__name__)
-socketio = SocketIO(app)
+app = create_app()
 
-cam: pvc.Camera = None # pyvirtualcam instance
-
+cam = Camera()
 
 # Default route, serves client HTML page, returns str of html.
 @app.route('/')
 def index() -> str:
     return render_template('client.html')
 
-
 # Socketio event when client device disconnects (reloads/closes/etc.) to remove their feed. Returns None.
 @socketio.on('stop_feed')
 def on_disconnect() -> None:
-    close_cam()
- 
-
-def close_cam() -> None:
-    global cam
-    if cam is not None:
-        cam.close()
-        cam = None
+    cam.close_cam()
 
 
 # Socketio event when a client device transmits a single frame of video feed. Returns None.
 @socketio.on('video_frame')
 def on_video_frame(data) -> None:
-    global cam
-
     frame_rate = data['frameRate']
 
     frame: str = data['image'] # frame data 
@@ -52,37 +40,21 @@ def on_video_frame(data) -> None:
     #     cam.send(frame)
     #     cam.sleep_until_next_frame()
 
-    # create camera if doesnt exist or has no shape
-    if cam is None or cam.width != frame.shape[1] or cam.height != frame.shape[0]:
-        close_cam()
-        try:
-            # TODO: add support for different backends
-            cam = pvc.Camera(width=frame.shape[1], height=frame.shape[0], 
-                             fps=frame_rate, fmt=pvc.PixelFormat.BGR, backend='obs')
-            print("initialized camera!")
-        except RuntimeError as e:
-            print(e)
-            exit(-1)
+    # create camera if doesnt exist or has wrong/no shape
+    if not cam.exists() or not cam.same_shape(frame):
+        cam.close_cam()
+        cam.open_cam(frame=frame, frame_rate=frame_rate)
 
-    cam.send(frame)
+    cam.get_cam().send(frame)
     # cam.sleep_until_next_frame()
 
     data['sid'] = request.sid
 
 
 if __name__ == '__main__':
-    if not os.path.exists("key.pem") or not os.path.exists("cert.pem"):
-        print("no self certification found, generating now...")
-        util.generate_key_cert_pem()
-    if not os.path.exists(".env"):
-        print("no .env file found, generating now...")
-        util.generate_env()
-    
     load_dotenv()
     host, port = os.getenv("HOST"), os.getenv("PORT")
-
     util.generate_qr(port=port)
 
-
     try: socketio.run(app, host=host, port=port, ssl_context=('cert.pem', 'key.pem')) 
-    finally: close_cam()
+    finally: cam.close_cam()
