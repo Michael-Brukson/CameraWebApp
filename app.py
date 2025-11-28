@@ -46,7 +46,7 @@ def on_video_frame(data) -> None:
         cam.open_cam(frame=frame, frame_rate=frame_rate)
 
     cam.get_cam().send(frame)
-    # cam.sleep_until_next_frame()
+    cam.get_cam().sleep_until_next_frame()
 
     data['sid'] = request.sid
 
