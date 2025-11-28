@@ -13,14 +13,16 @@ class Camera():
 
 
     def open_cam(self, frame: np.ndarray, frame_rate: int) -> None: 
+        # TODO: add support for different backends
+        # TODO: the Camera class within pyvirtualcam raises a RuntimeError if the camera could not be started, but it cannot be caught at this level. Figure out a way to catch it.
         try:
-            # TODO: add support for different backends
-            self.__cam = pvc.Camera(width=frame.shape[1], height=frame.shape[0], 
-                                fps=frame_rate, fmt=pvc.PixelFormat.BGR, backend='obs')
-            print("initialized camera!")
+            self.__cam = pvc.Camera(width=frame.shape[0], height=frame.shape[1], 
+                            fps=frame_rate, fmt=pvc.PixelFormat.BGR, backend='obs')
         except RuntimeError as e:
             print(e)
             exit(-1)
+        print("initialized camera!")
+            
 
 
     def exists(self) -> bool:

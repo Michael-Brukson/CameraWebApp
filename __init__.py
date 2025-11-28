@@ -2,6 +2,7 @@ from flask import Flask
 from flask_socketio import SocketIO
 import util
 import os
+import logging
 # from dotenv import load_dotenv
 
 socketio = SocketIO()
@@ -17,5 +18,8 @@ def create_app():
     app = Flask(__name__)
     
     socketio.init_app(app) 
+
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
 
     return app
