@@ -26,10 +26,9 @@ class Camera():
     def exists(self) -> bool:
         return not self.__cam is None
     
-
     def same_shape(self, frame: np.ndarray) -> bool:
         return not (self.__cam.width != frame.shape[1] or self.__cam.height != frame.shape[0])
     
-
-    def get_cam(self) -> pvc.Camera:
+    @property
+    def cam(self) -> pvc.Camera:
         return self.__cam
