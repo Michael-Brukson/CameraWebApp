@@ -1,5 +1,5 @@
 /* gotten from: https://stackoverflow.com/a/14455993/21667630 */
-#videoElement
+.flipped
 {
     transform: rotateY(180deg);
     -webkit-transform:rotateY(180deg);

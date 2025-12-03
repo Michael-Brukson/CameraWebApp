@@ -15,36 +15,26 @@ function deleteExisting() {
   });
 };
 
-startBtn.addEventListener('click', function() {
-  if (startBtn.dataset.state === 'transmitting') {
-    if (interval) {
-      clearInterval(interval);
-      interval = null;
-    }
-    startBtn.textContent = 'Start';
-    startBtn.dataset.state = 'stopped';
-    socket.emit('stop_feed');
-    deleteExisting()
-    return;
-  }
-
+// TODO: add filters, that'd be funny
+function startCam(){
   let facingMode = "user";
   let constraints = {
     audio: false,
     video: {
       facingMode: facingMode,
-      width: { min: 720, ideal: 1280 }, height: { min: 720, ideal: 1280 },
-      frameRate: {min: 15, ideal: 20}
+      width: { ideal: 1280 }, height: { ideal: 720 },
+      frameRate: {min: 20, ideal: 24}
     }
   };
 
-  let frameRate = constraints.video.frameRate.ideal || constraints.video.frameRate.min
+  let frameRate = constraints.video.frameRate.ideal;
 
   navigator.mediaDevices.getUserMedia(constraints).then(function success(stream) {
     let video = document.createElement('video');
     video.setAttribute('playsinline', '');
     video.setAttribute('autoplay', '');
     video.setAttribute('muted', '');
+    video.setAttribute('flipped', '');
     document.body.appendChild(video);
     video.srcObject = stream;
     activeVideo = video;
@@ -59,18 +49,35 @@ startBtn.addEventListener('click', function() {
       console.log(`Starting video at frame rate: ${frameRate}fps`);
       console.log(`Actual camera frame rate: ${video.srcObject.getVideoTracks()[0].getSettings().frameRate}fps`);
       console.log(`Sending a frame every: ${1000 /frameRate}ms`);
+      
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       interval = setInterval(function() {
         if (video) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          let dataURL = canvas.toDataURL('image/jpeg', quality=0.95); // switch to webrtc.
+          let dataURL = canvas.toDataURL('image/jpeg', quality=0.95);
           socket.emit('video_frame', { image: dataURL, frameRate: frameRate });
         }
       }, 1000 / frameRate); // ~20fps
-  
-      startBtn.textContent = 'Stop';
-      startBtn.dataset.state = 'transmitting';
     };
   });
+}
+
+
+startBtn.addEventListener('click', function() {
+  if (startBtn.dataset.state === 'transmitting') {
+    if (interval) {
+      clearInterval(interval);
+      interval = null;
+    }
+    startBtn.textContent = 'Start';
+    startBtn.dataset.state = 'stopped';
+    setTimeout(() => {}, 300);
+    socket.emit('stop_feed');
+    deleteExisting();
+  } else {
+    startCam();
+    startBtn.textContent = 'Stop';
+    startBtn.dataset.state = 'transmitting';
+  }
 });

@@ -1,10 +1,7 @@
 from flask import render_template, request
-import base64
-import numpy as np
-import cv2
-import re
 from dotenv import load_dotenv
 import os
+import numpy as np
 from __init__ import create_app, socketio
 import util
 from Camera import Camera
@@ -28,26 +25,13 @@ def on_disconnect() -> None:
 @socketio.on('video_frame')
 def on_video_frame(data) -> None:
     frame_rate = data['frameRate']
+    frame: np.ndarray = cam.to_ndarray(data['image'])
 
-    frame: str = data['image'] # frame data 
-    frame: str = re.sub('^data:image/.+;base64,', '', frame) # extract base64 string
-    frame: bytes = base64.b64decode(frame) # convert to bytes
-
-    frame: np.ndarray = np.frombuffer(frame, dtype=np.uint8) # convert to np.ndarray for opencv
-    frame: np.ndarray = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-
-    # with pvc.Camera(width=frame.shape[0], height=frame.shape[1], fps=20, fmt=pvc.PixelFormat.BGR) as cam:
-    #     cam.send(frame)
-    #     cam.sleep_until_next_frame()
-
-    # create camera if doesnt exist or has wrong/no shape
     if not cam.exists() or not cam.same_shape(frame):
         cam.close_cam()
         cam.open_cam(frame=frame, frame_rate=frame_rate)
 
-    cam.cam.send(frame)
-    cam.cam.sleep_until_next_frame()
-
+    cam.send(frame)
     data['sid'] = request.sid
 
 
@@ -57,4 +41,5 @@ if __name__ == '__main__':
     util.generate_qr(port=port)
 
     try: socketio.run(app, host=host, port=port, ssl_context=('cert.pem', 'key.pem')) 
-    finally: cam.close_cam()
+    except Exception as e: print(e)
+    finally: on_disconnect()
