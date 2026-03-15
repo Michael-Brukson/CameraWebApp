@@ -21,4 +21,4 @@ def generate_env(port: int = 443) -> None:
 # Only works on windows (for now)
 def generate_qr(port: int) -> None :
 
-    subprocess.run(["cmd", "/c", "ipv4_qr", "-s", "-p", f"{port}"])
+    subprocess.run(["cmd", "/c", "ipv4_qr", "-s", "-v", "-p", f"{port}"])

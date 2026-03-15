@@ -5,9 +5,9 @@ import os
 import logging
 # from dotenv import load_dotenv
 
-socketio = SocketIO()
+socketio: SocketIO = SocketIO()
 
-def create_app():
+def create_app() -> Flask:
     if not os.path.exists("key.pem") or not os.path.exists("cert.pem"):
         print("no self certification found, generating now...")
         util.generate_key_cert_pem()
@@ -19,7 +19,7 @@ def create_app():
     
     socketio.init_app(app) 
 
-    log = logging.getLogger('werkzeug')
+    log: logging.Logger = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
 
     return app

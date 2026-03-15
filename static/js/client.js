@@ -1,6 +1,11 @@
 var socket = io();
 var interval = null;
 var startBtn = document.getElementById('start');
+var inFlight = false;
+var inFlightTimeout = null;
+
+const ACK_TIMEOUT_MS = 1000;
+const JPEG_QUALITY = 0.65;
 
 function deleteExisting() {
   let remoteFeed = document.getElementById('remote-feed');
@@ -13,6 +18,11 @@ function deleteExisting() {
     }
     video.remove();
   });
+  inFlight = false;
+  if (inFlightTimeout) {
+    clearTimeout(inFlightTimeout);
+    inFlightTimeout = null;
+  }
 };
 
 // TODO: add filters, that'd be funny
@@ -54,9 +64,26 @@ function startCam(){
       canvas.height = video.videoHeight;
       interval = setInterval(function() {
         if (video) {
+          if (inFlight || video.readyState < 2) {
+            return;
+          }
+
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          let dataURL = canvas.toDataURL('image/jpeg', quality=0.95);
-          socket.emit('video_frame', { image: dataURL, frameRate: frameRate });
+          let dataURL = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+          inFlight = true;
+
+          inFlightTimeout = setTimeout(function() {
+            inFlight = false;
+            inFlightTimeout = null;
+          }, ACK_TIMEOUT_MS);
+
+          socket.emit('video_frame', { image: dataURL, frameRate: frameRate }, function() {
+            inFlight = false;
+            if (inFlightTimeout) {
+              clearTimeout(inFlightTimeout);
+              inFlightTimeout = null;
+            }
+          });
         }
       }, 1000 / frameRate); // ~20fps
     };
@@ -69,6 +96,11 @@ startBtn.addEventListener('click', function() {
     if (interval) {
       clearInterval(interval);
       interval = null;
+    }
+    inFlight = false;
+    if (inFlightTimeout) {
+      clearTimeout(inFlightTimeout);
+      inFlightTimeout = null;
     }
     startBtn.textContent = 'Start';
     startBtn.dataset.state = 'stopped';

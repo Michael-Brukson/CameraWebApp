@@ -1,14 +1,14 @@
-from flask import render_template, request
-from dotenv import load_dotenv
-import os
-import numpy as np
+from flask import Flask, render_template
 from __init__ import create_app, socketio
-import util
+from dotenv import load_dotenv
 from Camera import Camera
+import numpy as np
+import util
+import os
 
-app = create_app()
+app: Flask = create_app()
 
-cam = Camera()
+cam: Camera = Camera()
 
 # Default route, serves client HTML page, returns str of html.
 @app.route('/')
@@ -23,8 +23,8 @@ def on_disconnect() -> None:
 
 # Socketio event when a client device transmits a single frame of video feed. Returns None.
 @socketio.on('video_frame')
-def on_video_frame(data) -> None:
-    frame_rate = data['frameRate']
+def on_video_frame(data):
+    frame_rate = int(data.get('frameRate', 24))
     frame: np.ndarray = cam.to_ndarray(data['image'])
 
     if not cam.exists() or not cam.same_shape(frame):
@@ -32,12 +32,13 @@ def on_video_frame(data) -> None:
         cam.open_cam(frame=frame, frame_rate=frame_rate)
 
     cam.send(frame)
-    data['sid'] = request.sid
+    return {'ok': True}
 
 
 if __name__ == '__main__':
     load_dotenv()
-    host, port = os.getenv("HOST"), os.getenv("PORT")
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "443"))
     util.generate_qr(port=port)
 
     try: socketio.run(app, host=host, port=port, ssl_context=('cert.pem', 'key.pem')) 

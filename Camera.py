@@ -3,10 +3,11 @@ import numpy as np
 import cv2
 import re
 import base64
+from typing import Optional
 
 class Camera():
     def __init__(self):
-        self.__cam: pvc.Camera = None
+        self.__cam: Optional[pvc.Camera] = None
 
 
     def close_cam(self) -> None:
@@ -22,7 +23,8 @@ class Camera():
         # TODO: the Camera class within pyvirtualcam raises a RuntimeError if the camera could not be started, but it cannot be caught at this level. Figure out a way to catch it.
         try:
             self.__cam = pvc.Camera(width=frame.shape[1], height=frame.shape[0], 
-                            fps=frame_rate, fmt=pvc.PixelFormat.BGR, backend='obs')
+                            fps=frame_rate, fmt=pvc.PixelFormat.BGR, backend='obs', print_fps=False)
+            
         except RuntimeError as e:
             print(e)
             exit(-1)
@@ -38,20 +40,28 @@ class Camera():
         return self.__cam.width == frame.shape[1] and self.__cam.height == frame.shape[0]
         
     def to_ndarray(self, frame: str) -> np.ndarray:
-        frame: str = re.sub('^data:image/.+;base64,', '', frame) # extract base64 string
+        frame = re.sub('^data:image/.+;base64,', '', frame) # extract base64 string
         frame: bytes = base64.b64decode(frame) # convert to bytes
 
         frame: np.ndarray = np.frombuffer(frame, dtype=np.uint8) # convert to np.ndarray for opencv
         frame: np.ndarray = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-        frame: np.ndarray = cv2.resize(frame, (frame.shape[1], frame.shape[0]), interpolation=cv2.INTER_LINEAR)
+        # frame: np.ndarray = cv2.resize(frame, (frame.shape[1], frame.shape[0]), interpolation=cv2.INTER_LINEAR)
         return frame
 
 
     def send(self, frame: np.ndarray) -> None:
-        self.__cam.send(frame)
-        self.__cam.sleep_until_next_frame()
-    
+        if self.exists():
+            # TODO: Make setting on phone/computer to show fps counter
+            # TODO: add other statistics settings to show
+            # TODO: add settings for phone
+            cv2.putText(frame, f'FPS: {self.__cam.current_fps:.2f}', (50,50), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
+            # frame = cv2.flip(frame, 1)
+            self.__cam.send(frame)
+            self.__cam.sleep_until_next_frame()
+        else:
+            pass
+        
 
     @property
-    def cam(self) -> pvc.Camera:
+    def cam(self) -> pvc.Camera | None:
         return self.__cam
