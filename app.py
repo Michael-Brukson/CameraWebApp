@@ -1,11 +1,16 @@
 from flask import Flask, render_template
-from __init__ import create_app, socketio
+from __init__ import create_app, socketio, init_folders
 from dotenv import load_dotenv
 from Camera import Camera
 import numpy as np
 import util
 import os
+import logging
 
+logger: logging.Logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+init_folders()
 app: Flask = create_app()
 
 cam: Camera = Camera()
@@ -34,13 +39,17 @@ def on_video_frame(data):
     cam.send(frame)
     return {'ok': True}
 
-
-if __name__ == '__main__':
+@util.log_func
+def main() -> None:
     load_dotenv()
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", "443"))
-    util.generate_qr(port=port)
+    port = os.getenv("PORT", "443")
+    util.generate_qr(host=host, port=port)
 
-    try: socketio.run(app, host=host, port=port, ssl_context=('cert.pem', 'key.pem')) 
+    try: socketio.run(app, host=host, port=int(port), ssl_context=('cert.pem', 'key.pem')) 
     except Exception as e: print(e)
     finally: on_disconnect()
+
+
+if __name__ == '__main__':
+    main()

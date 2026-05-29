@@ -5,7 +5,14 @@
         <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     </head>
     <body>
-        <button id="start">Start</button>
+        <div>
+            <button id="startBtn">Start</button>
+            <label class="toggle-switch">
+                <input type="checkbox" id="showFps">
+                <span class="slider"></span>
+            </label>
+            <label for="showFps">Show FPS?</label>
+        </div>
         <div id="remote-feed"></div>
         <script src="{{ url_for('static', filename='js/client.js') }}"></script>
     </body>

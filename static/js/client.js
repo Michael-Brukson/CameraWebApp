@@ -1,6 +1,5 @@
 var socket = io();
 var interval = null;
-var startBtn = document.getElementById('start');
 var inFlight = false;
 var inFlightTimeout = null;
 
@@ -41,10 +40,14 @@ function startCam(){
 
   navigator.mediaDevices.getUserMedia(constraints).then(function success(stream) {
     let video = document.createElement('video');
-    video.setAttribute('playsinline', '');
-    video.setAttribute('autoplay', '');
-    video.setAttribute('muted', '');
-    video.setAttribute('flipped', '');
+    const attributes = {
+      'playsinline': 'active',
+      'autoplay': 'active',
+      'muted': 'active',
+      'flipped': 'active'
+    };
+    
+    Object.keys(attributes).forEach(key => {video.setAttribute(key, attributes[key])});
     document.body.appendChild(video);
     video.srcObject = stream;
     activeVideo = video;
