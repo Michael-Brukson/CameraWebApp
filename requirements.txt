@@ -19,6 +19,7 @@ Jinja2
 MarkupSafe
 numpy
 opencv-python
+pillow
 pycparser
 pyee
 pylibsrtp
@@ -27,6 +28,7 @@ python-dotenv
 python-engineio
 python-socketio
 pyvirtualcam
+qrcode
 simple-websocket
 typing_extensions
 Werkzeug
