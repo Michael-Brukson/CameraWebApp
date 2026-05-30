@@ -2,6 +2,7 @@ import subprocess
 import qrcode
 import logging
 import functools
+import socket
 from pathlib import Path
 
 logger: logging.Logger = logging.getLogger()
@@ -29,9 +30,12 @@ def generate_key_cert_pem() -> None:
         logger.error("failed to create private key and/or certificate.")
         exit(-1)
         
-
+# TODO: when there are multiple ip addresses (ethernet + wireless connection), choose the last one
 def generate_env(port: int = 443) -> None:
-    subprocess.run(["echo", "HOST='0.0.0.0'", ">", ".env"], shell=True)
+    # hostname: str = socket.gethostname()
+    # host: str = socket.gethostbyname(hostname)
+
+    subprocess.run(["echo", f"HOST=0.0.0.0", ">", ".env"], shell=True)
     subprocess.run(["echo", f"PORT={port}", ">>", ".env"], shell=True)
 
 def generate_qr(host: str, port: str) -> None :
