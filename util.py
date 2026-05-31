@@ -14,7 +14,6 @@ def generate_key_cert_pem() -> None:
     cmd: list[str] = ["openssl", "req", "-x509", "-newkey", "rsa:4096",
         "-keyout", "key.pem", "-out", "cert.pem", "-nodes",
         "-days", "365", "-config", "openssl.conf"]  
-    print(*cmd) 
     try:
         subprocess.run(cmd,
                         cwd=base_dir,
