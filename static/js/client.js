@@ -3,7 +3,7 @@ var interval = null;
 var inFlight = false;
 var inFlightTimeout = null;
 
-const ACK_TIMEOUT_MS = 1000;
+const ACK_TIMEOUT_MS = 500;
 const JPEG_QUALITY = 0.65;
 
 function deleteExisting() {
@@ -32,7 +32,7 @@ function startCam(){
     video: {
       facingMode: facingMode,
       width: { ideal: 1280 }, height: { ideal: 720 },
-      frameRate: {min: 20, ideal: 24}
+      frameRate: {min: 24, ideal: 60}
     }
   };
 
@@ -61,7 +61,7 @@ function startCam(){
       console.log(`Starting video at resolution: ${video.videoWidth}x${video.videoHeight}px`);
       console.log(`Starting video at frame rate: ${frameRate}fps`);
       console.log(`Actual camera frame rate: ${video.srcObject.getVideoTracks()[0].getSettings().frameRate}fps`);
-      console.log(`Sending a frame every: ${1000 /frameRate}ms`);
+      console.log(`Sending a frame every: ${1000 / frameRate}ms`);
       
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
