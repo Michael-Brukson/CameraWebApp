@@ -8,7 +8,8 @@ from datetime import datetime
 
 socketio: SocketIO = SocketIO()
 
-def init_folders() -> None:
+# Function to check if the required files and folders exist, and if not, initalize them.
+def init_dependencies() -> None:
     logger: logging.Logger = logging.getLogger(__name__)
 
     key_path: Path = Path("key.pem")
@@ -16,21 +17,25 @@ def init_folders() -> None:
     env_path: Path = Path(".env")
     logs_path: Path = Path("logs")
 
+    # error loop to check if 'logs' folder exists for logger. 
     while True:
         try: 
-            logging.basicConfig(filename = f"logs/{datetime.now().strftime('%dd-%mm-%yy_%Hh_%Mm_%Ss')}.log", level=logging.INFO)
+            logging.basicConfig(filename = f"logs/{datetime.now().strftime('%dd-%mm-%yy_%Hh-%Mm-%Ss')}.log", level=logging.INFO)
         except FileNotFoundError:
             logs_path.mkdir()
             continue
         break
+    # check if private key and public cert exists for https
     if not key_path.exists() or not cert_path.exists():
         logger.info("no self certification found, generating now...")
         util.generate_key_cert_pem()
+    # check if .env exists for knowing the default host and port
     if not env_path.exists():
         logger.info("no .env file found, generating now...")
         util.generate_env()
 
 
+# Function to create and return flask app.
 def create_app() -> Flask:
     app = Flask(__name__)
 

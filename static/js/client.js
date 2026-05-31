@@ -36,8 +36,6 @@ function startCam(){
     }
   };
 
-  let frameRate = constraints.video.frameRate.ideal;
-
   navigator.mediaDevices.getUserMedia(constraints).then(function success(stream) {
     let video = document.createElement('video');
     const attributes = {
@@ -47,20 +45,18 @@ function startCam(){
       'flipped': 'active'
     };
     
+    let frameRate = stream.getVideoTracks()[0].getSettings().frameRate;
+
     Object.keys(attributes).forEach(key => {video.setAttribute(key, attributes[key])});
     document.body.appendChild(video);
     video.srcObject = stream;
     activeVideo = video;
 
-    let canvas = document.createElement('canvas');
-    let ctx = canvas.getContext('2d');
-    document.getElementById('remote-feed').appendChild(canvas);
-    canvas.style.display = 'none';
+    let [canvas, ctx] = createCanvas();
 
     video.onloadedmetadata = function() {
       console.log(`Starting video at resolution: ${video.videoWidth}x${video.videoHeight}px`);
       console.log(`Starting video at frame rate: ${frameRate}fps`);
-      console.log(`Actual camera frame rate: ${video.srcObject.getVideoTracks()[0].getSettings().frameRate}fps`);
       console.log(`Sending a frame every: ${1000 / frameRate}ms`);
       
       canvas.width = video.videoWidth;
@@ -80,13 +76,9 @@ function startCam(){
             inFlightTimeout = null;
           }, ACK_TIMEOUT_MS);
 
-          socket.emit('video_frame', { image: dataURL, frameRate: frameRate }, function() {
-            inFlight = false;
-            if (inFlightTimeout) {
-              clearTimeout(inFlightTimeout);
-              inFlightTimeout = null;
-            }
-          });
+          let options = {"showFPS": showFps.checked};
+
+          send_frame(dataURL, frameRate, options);
         }
       }, 1000 / frameRate); // ~20fps
     };
@@ -116,3 +108,23 @@ startBtn.addEventListener('click', function() {
     startBtn.dataset.state = 'transmitting';
   }
 });
+
+
+function createCanvas(){
+  let canvas = document.createElement('canvas');
+  let ctx = canvas.getContext('2d');
+  document.getElementById('remote-feed').appendChild(canvas);
+  canvas.style.display = 'none';
+
+  return [canvas, ctx];
+}
+
+function send_frame(image, frameRate, options){
+  socket.emit('video_frame', { image: image, frameRate: frameRate, options: options}, function() {
+    inFlight = false;
+    if (inFlightTimeout) {
+      clearTimeout(inFlightTimeout);
+      inFlightTimeout = null;
+    };
+  });
+}

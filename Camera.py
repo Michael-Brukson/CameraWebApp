@@ -9,7 +9,6 @@ class Camera():
     def __init__(self):
         self.__cam: Optional[pvc.Camera] = None
 
-
     def close_cam(self) -> None:
         if self.__cam is not None:
             self.__cam.close()
@@ -33,12 +32,13 @@ class Camera():
 
     def exists(self) -> bool:
         return not self.__cam is None
-    
+
 
     def same_shape(self, frame: np.ndarray) -> bool:
         if not self.exists(): return False 
         return self.__cam.width == frame.shape[1] and self.__cam.height == frame.shape[0]
         
+
     def to_ndarray(self, frame: str) -> np.ndarray:
         frame = re.sub('^data:image/.+;base64,', '', frame) # extract base64 string
         frame: bytes = base64.b64decode(frame) # convert to bytes
@@ -49,12 +49,13 @@ class Camera():
         return frame
 
 
-    def send(self, frame: np.ndarray) -> None:
+    def send(self, frame: np.ndarray, options: dict) -> None:
         if self.exists():
             # TODO: Make setting on phone/computer to show fps counter
             # TODO: add other statistics settings to show
             # TODO: add settings for phone
-            cv2.putText(frame, f'FPS: {self.__cam.current_fps:.2f}', (50,50), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
+            if options['showFPS']:
+                cv2.putText(frame, f'FPS: {self.__cam.current_fps:.2f}', (50,50), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
             # frame = cv2.flip(frame, 1)
             self.__cam.send(frame)
             self.__cam.sleep_until_next_frame()

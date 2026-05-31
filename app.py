@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-from __init__ import create_app, socketio, init_folders
+from __init__ import create_app, socketio, init_dependencies
 from dotenv import load_dotenv
 from Camera import Camera
 import numpy as np
@@ -10,7 +10,7 @@ import logging
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-init_folders()
+init_dependencies()
 app: Flask = create_app()
 
 cam: Camera = Camera()
@@ -29,6 +29,7 @@ def on_disconnect() -> None:
 # Socketio event when a client device transmits a single frame of video feed. Returns None.
 @socketio.on('video_frame')
 def on_video_frame(data):
+    options: dict = data.get('options')
     frame_rate = int(data.get('frameRate', 24))
     frame: np.ndarray = cam.to_ndarray(data['image'])
 
@@ -36,7 +37,7 @@ def on_video_frame(data):
         cam.close_cam()
         cam.open_cam(frame=frame, frame_rate=frame_rate)
 
-    cam.send(frame)
+    cam.send(frame, options)
     return {'ok': True}
 
 @util.log_func
@@ -47,9 +48,8 @@ def main() -> None:
     util.generate_qr(host=host, port=port)
 
     try: socketio.run(app, host=host, port=int(port), ssl_context=('cert.pem', 'key.pem')) 
-    except Exception as e: print(e)
+    except Exception as e: logger.info(e)
     finally: on_disconnect()
-
 
 if __name__ == '__main__':
     main()
