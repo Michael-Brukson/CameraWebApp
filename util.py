@@ -2,12 +2,13 @@ import subprocess
 import qrcode
 import logging
 import functools
-import socket
 from pathlib import Path
+# import socket
 
 logger: logging.Logger = logging.getLogger()
 
 # TODO: This does not work as intented. For some reason, the files do not get created.
+# Function to generate private key and certificate for https on the flask app.
 def generate_key_cert_pem() -> None:
     base_dir: Path = Path(__file__).resolve().parent
 
@@ -29,7 +30,9 @@ def generate_key_cert_pem() -> None:
         logger.error("failed to create private key and/or certificate.")
         exit(-1)
         
+
 # TODO: when there are multiple ip addresses (ethernet + wireless connection), choose the last one
+# Function to autogenerate .env file
 def generate_env(port: int = 443) -> None:
     # hostname: str = socket.gethostname()
     # host: str = socket.gethostbyname(hostname)
@@ -37,12 +40,16 @@ def generate_env(port: int = 443) -> None:
     subprocess.run(["echo", f"HOST=0.0.0.0", ">", ".env"], shell=True)
     subprocess.run(["echo", f"PORT={port}", ">>", ".env"], shell=True)
 
+
+# Function to show qr code to flask server
 def generate_qr(host: str, port: str) -> None :
     url: str = f"https://{host}/{port}"
     logger.info(f"making qr code for: {url}")
     qr = qrcode.make(url)
     qr.show(title = url)
 
+
+# Wrapper function to log a call to a function
 def log_func(func):
     logger.info(f"Log for {func.__name__}")
     @functools.wraps(func)

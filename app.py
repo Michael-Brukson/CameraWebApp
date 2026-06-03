@@ -33,12 +33,14 @@ def on_video_frame(data):
     frame_rate = int(data.get('frameRate', 24))
     frame: np.ndarray = cam.to_ndarray(data['image'])
 
+    # if camera does not exist or if frame is the wrong shape, recreate with new shape
     if not cam.exists() or not cam.same_shape(frame):
         cam.close_cam()
         cam.open_cam(frame=frame, frame_rate=frame_rate)
 
     cam.send(frame, options)
     return {'ok': True}
+
 
 @util.log_func
 def main() -> None:
@@ -48,8 +50,9 @@ def main() -> None:
     util.generate_qr(host=host, port=port)
 
     try: socketio.run(app, host=host, port=int(port), ssl_context=('cert.pem', 'key.pem')) 
-    except Exception as e: logger.info(e)
-    finally: on_disconnect()
+    except Exception as e: logger.info(f"encountered {type(e).__name__} -> {e}")
+    finally: cam.close_cam()
+
 
 if __name__ == '__main__':
     main()
