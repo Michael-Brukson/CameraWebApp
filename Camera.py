@@ -64,8 +64,13 @@ class Camera():
         # TODO: Make setting on phone/computer to show fps counter
         # TODO: add other statistics settings to show
         # TODO: add settings for phone
-        if options['showFPS']:
-            cv2.putText(frame, f'FPS: {self.cam.current_fps:.2f}', (50,50), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
+        # TODO: remove hard coded coordinates
+        if options.get('showFPS'):
+            cv2.putText(frame, f"FPS: {self.cam.current_fps:.2f}", (50,50), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
+        if options.get('battery'):
+            cv2.putText(frame, f"Battery: {options.get('battery')}%", (50,100), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
+
+
         # frame = cv2.flip(frame, 1)
         self.cam.send(frame)
         self.cam.sleep_until_next_frame()

@@ -7,13 +7,25 @@
     <body>
         <div>
             <button id="startBtn">Start</button>
-            <label class="toggle-switch">
-                <input type="checkbox" id="showFps">
-                <span class="slider"></span>
-            </label>
-            <label for="showFps">Show FPS?</label>
+
+            <div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="showFPS">
+                    <span class="slider"></span>
+                </label>
+                <label for="showFPS">Show FPS?</label>
+
+                <label class="toggle-switch">
+                    <input type="checkbox" id="showBattery">
+                    <span class="slider"></span>
+                </label>
+                <label for="showBattery">Show Battery %?</label>
+            </div>
         </div>
         <div id="remote-feed"></div>
-        <script src="{{ url_for('static', filename='js/client.js') }}"></script>
+        <script type="module" src="{{ url_for('static', filename='js/client.js') }}"></script>
     </body>
+
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
 </html>
